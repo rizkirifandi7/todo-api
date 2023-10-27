@@ -1,0 +1,47 @@
+version: '3.8'
+
+networks:
+  app-tier:
+    driver: bridge
+
+services:
+  todo-app:
+    container_name: todo-app
+    image: todo_live_app
+    build: .
+    ports:
+      - "8010:8010"
+    env_file:
+      - .env
+    environment:
+      - EXTERNAL_PORT=8010
+      - POSTGRES_USER
+      - POSTGRES_DB
+      - POSTGRES_PASSWORD
+      - PGHOST = todo_db
+    depends_on:
+      - todo_db
+    volumes:
+      - ".:/app"
+    networks:
+      - app-tier
+
+  todo_db:
+    container_name: todo_db
+    image: postgres:16
+    ports:
+      - "5432:5432"
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - POSTGRES_DB
+    volumes:
+      - todo_db_data:/var/lib/postgresql/data
+    networks:
+      - app-tier
+    restart : always
+
+volumes:
+  todo_db_data: {}
