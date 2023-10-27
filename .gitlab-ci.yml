@@ -1,0 +1,39 @@
+image: docker:latest
+
+variables:
+  REPOSITORY_URL: rizkirifani7/todoapi-cicd
+  IMAGE_TAG: latest
+
+services:
+  - docker:dind
+
+before_script:
+  - docker login --username=$DH_USERNAME --password=$DH_PASSWORD
+
+stages:
+  - build
+  - deploy
+
+build:
+  stage: build
+  script:
+    - echo "Building image..."
+    - docker build
+      -t todoapi-cicd:latest
+      --build-arg PORT=$PORT
+      --no-cache .
+    - echo "Tagging image..."
+    - docker tag todoapi-cicd:latest $REPOSITORY_URL:latest
+    - echo "Pushing image..."
+    - docker push $REPOSITORY_URL:latest
+  only:
+    - main
+
+deploy:
+  stage: deploy
+  script:
+    - docker stop todoapi-cicd || true && docker rm todoapi-cicd || true
+    - docker container run -dt -p $PORT:$PORT --name todoapi-cicd $REPOSITORY_URL:latest
+    - docker image prune -f
+  only:
+    - main
